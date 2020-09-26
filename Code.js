@@ -1,73 +1,45 @@
-function doGet(e) {
-  return HtmlService.createHtmlOutput(alert);
-}
+function doGet(e) { return HtmlService.createHtmlOutput(alert) }
 
 function doPost(e) {
   if (!e.postData) return;
   if (e.postData.type != 'application/json') return;
   let data = JSON.parse(e.postData.contents);
-  let message = data.message;
-  let idFrom = message.from.id;
-  let idChat = message.chat.id;
-  if (idFrom == idChat && !isJoin(idFrom)) {
-    let params = {
-      chat_id: idFrom,
-      text: 'Please join to @' + channel + ' first.'
-    };
-    request('/sendMessage', params);
-    return;
-  }
   try {
-    if (message.media_group_id) Utilities.sleep(1000);
-    if (isBotCommand(message.entities)) return;
-    else if (message.text) sendMessage(message.text);
-    else if (message.sticker) sendSticker(message.sticker);
-    else if (message.photo) sendPhoto(message.photo, message.caption);
-    else if (message.animation) sendAnimation(message.animation, message.caption);
-    else if (message.video) sendVideo(message.video, message.caption);
-    else if (message.audio) sendAudio(message.audio, message.caption);
-    else if (message.document) sendDocument(message.document, message.caption);
-    else if (message.poll) sendPoll(message.poll);
-    else if (message.dice) sendDice(message.dice);
+    let message = data.message;
+    if (!message) return;
+    let sent;
+    let validTrigger = isValidTrigger(message.text) || isValidTrigger(message.caption);
+    if (message.media_group_id) Utilities.sleep(2000);
+    if (isBotCommand(message.entities) || !validTrigger) return;
+    else if (message.text) sent = sendMessage(message.text);
+    else if (message.sticker) sent = sendSticker(message.sticker.file_id);
+    else if (message.photo) sent = sendPhoto(message.photo[0].file_id, message.caption);
+    else if (message.animation) sent = sendAnimation(message.animation.file_id, message.caption);
+    else if (message.video) sent = sendVideo(message.video.file_id, message.caption);
+    else if (message.audio) sent = sendAudio(message.audio.file_id, message.caption);
+    else if (message.document) sent = sendDocument(message.document.file_id, message.caption);
+    else if (message.poll) sent = sendPoll(message.poll);
+    else if (message.dice) sent = sendDice(message.dice.emoji);
+    else sendMessage('`' + JSON.stringify(message, null, 2) + '`', creator);
+    if (sent) sendMessage(thanks, message.from.id);
   } catch (error) {
-    let params = {
-      chat_id: creator,
-      text: error
-    };
-    request('/sendMessage', params);
+    error = 'ERROR @' + channel + '\n\n' + error.toString();
+    error += '\n\n`' + JSON.stringify(data, null, 2) + '`';
+    sendMessage(error, creator);
   }
-  /*
-  let result = ContentService.createTextOutput(e.postData.contents);
-  result.setMimeType(ContentService.MimeType.JSON);
-  return result;
-  */
 }
 
 function request(endPoint, data) {
-  Utilities.sleep(1000);
   let params = {
     'contentType': 'application/json',
     'method': 'post',
-    'payload': JSON.stringify(data),
+    'payload': JSON.stringify(data, null, 2),
     'muteHttpExceptions': true
   };
   let request = UrlFetchApp.fetch(botUrl + endPoint, params);
   let response = JSON.parse(request.getContentText());
   if (response.ok) return response;
-  else throw response;
-}
-
-function isJoin(id) {
-  try {
-    let params = {
-      chat_id: '@' + channel,
-      user_id: id
-    };
-    let response = request('/getChatMember', params);
-    return response.result ? true : false;
-  } catch (e) {
-    return false;
-  }
+  else throw response.description;
 }
 
 function isBotCommand(entities) {
@@ -75,6 +47,13 @@ function isBotCommand(entities) {
   let command = entities[0].type == 'bot_command';
   let offset = entities[0].offset == 0;
   if (command && offset) return true;
+  return false;
+}
+
+function isValidTrigger(text) {
+  if (!trigger) return true;
+  if (!text) return false;
+  if (text.toLowerCase().includes(trigger)) return true;
   return false;
 }
 
@@ -95,33 +74,33 @@ function parseMessage(text) {
   return result;
 }
 
-function sendMessage(msg) {
-  let message = parseMessage(msg);
+function sendMessage(message, id = username, preview = false) {
+  message = parseMessage(message);
   let params = {
-    chat_id: '@' + channel,
+    chat_id: id,
     text: message.text,
     parse_mode: 'Markdown',
+    disable_web_page_preview: preview,
     reply_to_message_id: message.id
   };
   let response = request('/sendMessage', params);
   return response.result;
 }
 
-function sendSticker(img) {
+function sendSticker(image, id = username) {
   let params = {
-    chat_id: '@' + channel,
-    sticker: img.file_id,
+    chat_id: id,
+    sticker: image
   };
-  /* TODO : reply_to_message_id */
   let response = request('/sendSticker', params);
   return response.result;
 }
 
-function sendPhoto(img, msg) {
-  let message = parseMessage(msg);
+function sendPhoto(image, message, id = username) {
+  message = parseMessage(message);
   let params = {
-    chat_id: '@' + channel,
-    photo: img[0].file_id,
+    chat_id: id,
+    photo: image,
     caption: message.text,
     parse_mode: 'Markdown',
     reply_to_message_id: message.id
@@ -130,11 +109,11 @@ function sendPhoto(img, msg) {
   return response.result;
 }
 
-function sendAnimation(anim, msg) {
-  let message = parseMessage(msg);
+function sendAnimation(image, message, id = username) {
+  message = parseMessage(message);
   let params = {
-    chat_id: '@' + channel,
-    animation: anim.file_id,
+    chat_id: id,
+    animation: image,
     caption: message.text,
     parse_mode: 'Markdown',
     reply_to_message_id: message.id
@@ -143,11 +122,11 @@ function sendAnimation(anim, msg) {
   return response.result;
 }
 
-function sendVideo(vid, msg) {
-  let message = parseMessage(msg);
+function sendVideo(vid, message, id = username) {
+  message = parseMessage(message);
   let params = {
-    chat_id: '@' + channel,
-    video: vid.file_id,
+    chat_id: id,
+    video: vid,
     caption: message.text,
     parse_mode: 'Markdown',
     reply_to_message_id: message.id
@@ -156,11 +135,11 @@ function sendVideo(vid, msg) {
   return response.result;
 }
 
-function sendAudio(music, msg) {
-  let message = parseMessage(msg);
+function sendAudio(music, message, id = username) {
+  message = parseMessage(message);
   let params = {
-    chat_id: '@' + channel,
-    audio: music.file_id,
+    chat_id: id,
+    audio: music,
     caption: message.text,
     parse_mode: 'Markdown',
     reply_to_message_id: message.id
@@ -169,11 +148,11 @@ function sendAudio(music, msg) {
   return response.result;
 }
 
-function sendDocument(doc, msg) {
-  let message = parseMessage(msg);
+function sendDocument(doc, message, id = username) {
+  message = parseMessage(message);
   let params = {
-    chat_id: '@' + channel,
-    document: doc.file_id,
+    chat_id: id,
+    document: doc,
     caption: message.text,
     parse_mode: 'Markdown',
     reply_to_message_id: message.id
@@ -182,11 +161,11 @@ function sendDocument(doc, msg) {
   return response.result;
 }
 
-function sendPoll(poll) {
+function sendPoll(poll, id = username) {
   let answers = [];
   for (let i in poll.options) answers.push(poll.options[i].text);
   let params = {
-    chat_id: '@' + channel,
+    chat_id: id,
     question: poll.question,
     options: answers,
     type: poll.type,
@@ -195,17 +174,15 @@ function sendPoll(poll) {
     explanation: poll.explanation,
     explanation_parse_mode: 'Markdown'
   };
-  /* TODO : reply_to_message_id */
   let response = request('/sendPoll', params);
   return response.result;
 }
 
-function sendDice(dice) {
+function sendDice(dice, id = username) {
   let params = {
-    chat_id: '@' + channel,
-    emoji: dice.emoji
+    chat_id: id,
+    emoji: dice
   };
-  /* TODO : reply_to_message_id */
   let response = request('/sendDice', params);
   return response.result;
 }
