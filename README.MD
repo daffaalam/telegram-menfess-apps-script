@@ -14,16 +14,18 @@ Optional:
 - `report`, your feedback message after the message is forwarded to `creator`, default is 'Thanks for using this bot, your message will be sent immediately to Admin.'.
 - `invalid`, your feedback message if the trigger is set and user send the message without trigger, default is 'Your message does not contain trigger words.'.
 
+Copy this code to your project.
+
 ```js
-const telegram = Telegram.init({
+const tg = Telegram.init({
   token: '',
   channel: '',
   exec: ''
 });
 
-function doGet(e) { telegram.doGet(e) }
+function doGet(e) { return tg.doGet(e) }
 
-function doPost(e) { telegram.doPost(e) }
+function doPost(e) { return tg.doPost(e) }
 
-function setWebhook() { telegram.setWebhook() }
+function setWebhook() { return tg.setWebhook() }
 ```
