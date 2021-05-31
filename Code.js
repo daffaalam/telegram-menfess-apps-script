@@ -1,13 +1,13 @@
-const version = 4;
+const version = 1205312000;
 
 /**
- * @param {Object} e
+ * @param {object} e
  * @return {HtmlService.HtmlOutput}
  */
 function doGet(e) { return HtmlService.createHtmlOutput(this.alert) }
 
 /**
- * @param {Object} e
+ * @param {object} e
  * @return {ContentService.TextOutput}
  */
 function doPost(e) {
@@ -34,24 +34,31 @@ function doPost(e) {
     else if (message.document) sent = sendDocument(message.document.file_id, message.caption);
     else if (message.poll) sent = sendPoll(message.poll);
     else if (message.dice) sent = sendDice(message.dice.emoji);
-    else sendMessage('`' + JSON.stringify(message, null, 2) + '`', this.creator);
+    else sendMessage('`' + JSON.stringify(message, null, 2) + '`', this.admin);
     if (sent) sendMessage(this.thanks, message.from.id);
   } catch (error) {
     error = 'ERROR @' + this.channel + '\n\n' + error.toString();
     error += '\n\n`' + JSON.stringify(data, null, 2) + '`';
-    sendMessage(error, this.creator);
+    sendMessage(error, this.admin);
   }
   let output = ContentService.createTextOutput(JSON.stringify(data, null, 2));
   return output.setMimeType(ContentService.MimeType.JSON);
 }
 
 /**
- * @param {Object} data
- * token, creator, trigger, channel, exec, thanks, report, invalid.
+ * @param {object} data
+ * @param {string} data.token
+ * @param {number} data.admin
+ * @param {string} data.trigger
+ * @param {string} data.channel
+ * @param {string} data.exec
+ * @param {string} data.thanks
+ * @param {string} data.report
+ * @param {string} data.invalid
  * contact me at Telegram.
  * username: daffaalam
  * id: 256902271
- * @return {Telegram}
+ * @return {this}
  */
 function init(data) {
   if (!data || data == {}) throw 'data must not be null or empty';
@@ -61,7 +68,7 @@ function init(data) {
   let thanks = 'Thanks for using this bot, your message will be sent immediately to ';
   this.token = data.token;
   this.botUrl = 'https://api.telegram.org/bot' + this.token;
-  this.creator = data.creator || -1001385703290;
+  this.admin = data.admin || -1001385703290;
   this.trigger = data.trigger || '';
   this.channel = data.channel;
   this.username = '@' + this.channel;
@@ -74,9 +81,9 @@ function init(data) {
 }
 
 /**
- * @param {String} endPoint
- * @param {Object} data
- * @return {Object}
+ * @param {string} endPoint
+ * @param {object} data
+ * @return {object}
  */
 function request(endPoint, data = {}) {
   data = JSON.stringify(data, null, 2);
@@ -93,7 +100,7 @@ function request(endPoint, data = {}) {
 }
 
 /**
- * @param {Object} entities
+ * @param {object} entities
  * @return {boolean}
  */
 function isBotCommand(entities) {
@@ -105,7 +112,7 @@ function isBotCommand(entities) {
 }
 
 /**
- * @param {String} text
+ * @param {string} text
  * @return {boolean}
  */
 function isValidTrigger(text) {
@@ -116,8 +123,8 @@ function isValidTrigger(text) {
 }
 
 /**
- * @param {String} text
- * @return {Object}
+ * @param {string} text
+ * @return {object}
  */
 function parseMessage(text) {
   let format = ['http://', 'https://', ''];
@@ -144,22 +151,22 @@ function parseMessage(text) {
 }
 
 /**
- * @param {String} command
+ * @param {string} command
  * @return {boolean}
  */
 function sendBotCommand(command) {
   if (!command.toLowerCase().includes(' ')) return false;
-  sendMessage(command, this.creator);
+  sendMessage(command, this.admin);
   this.thanks = this.report;
   return true;
 }
 
 /**
- * @param {String} message
- * @param {String | Number} id
+ * @param {string} message
+ * @param {string | number} id
  * @param {boolean} preview
- * @param {String} parse
- * @return {Object}
+ * @param {string} parse
+ * @return {object}
  */
 function sendMessage(message, id = this.username, preview = false, parse = 'Markdown') {
   let msg = parseMessage(message);
@@ -175,9 +182,9 @@ function sendMessage(message, id = this.username, preview = false, parse = 'Mark
 }
 
 /**
- * @param {String} image
- * @param {String | Number} id
- * @return {Object}
+ * @param {string} image
+ * @param {string | number} id
+ * @return {object}
  */
 function sendSticker(image, id = this.username) {
   let params = {
@@ -189,11 +196,11 @@ function sendSticker(image, id = this.username) {
 }
 
 /**
- * @param {String} image
- * @param {String} message
- * @param {String | Number} id
- * @param {String} parse
- * @return {Object}
+ * @param {string} image
+ * @param {string} message
+ * @param {string | number} id
+ * @param {string} parse
+ * @return {object}
  */
 function sendPhoto(image, message, id = this.username, parse = 'Markdown') {
   let msg = parseMessage(message);
@@ -209,11 +216,11 @@ function sendPhoto(image, message, id = this.username, parse = 'Markdown') {
 }
 
 /**
- * @param {String} image
- * @param {String} message
- * @param {String | Number} id
- * @param {String} parse
- * @return {Object}
+ * @param {string} image
+ * @param {string} message
+ * @param {string | number} id
+ * @param {string} parse
+ * @return {object}
  */
 function sendAnimation(image, message, id = this.username, parse = 'Markdown') {
   let msg = parseMessage(message);
@@ -229,11 +236,11 @@ function sendAnimation(image, message, id = this.username, parse = 'Markdown') {
 }
 
 /**
- * @param {String} vid
- * @param {String} message
- * @param {String | Number} id
- * @param {String} parse
- * @return {Object}
+ * @param {string} vid
+ * @param {string} message
+ * @param {string | number} id
+ * @param {string} parse
+ * @return {object}
  */
 function sendVideo(vid, message, id = this.username, parse = 'Markdown') {
   let msg = parseMessage(message);
@@ -249,11 +256,11 @@ function sendVideo(vid, message, id = this.username, parse = 'Markdown') {
 }
 
 /**
- * @param {String} music
- * @param {String} message
- * @param {String | Number} id
- * @param {String} parse
- * @return {Object}
+ * @param {string} music
+ * @param {string} message
+ * @param {string | number} id
+ * @param {string} parse
+ * @return {object}
  */
 function sendAudio(music, message, id = this.username, parse = 'Markdown') {
   let msg = parseMessage(message);
@@ -269,11 +276,11 @@ function sendAudio(music, message, id = this.username, parse = 'Markdown') {
 }
 
 /**
- * @param {String} doc
- * @param {String} message
- * @param {String | Number} id
- * @param {String} parse
- * @return {Object}
+ * @param {string} doc
+ * @param {string} message
+ * @param {string | number} id
+ * @param {string} parse
+ * @return {object}
  */
 function sendDocument(doc, message, id = this.username, parse = 'Markdown') {
   let msg = parseMessage(message);
@@ -289,10 +296,10 @@ function sendDocument(doc, message, id = this.username, parse = 'Markdown') {
 }
 
 /**
- * @param {Object} poll
- * @param {String | Number} id
- * @param {String} parse
- * @return {Object}
+ * @param {object} poll
+ * @param {string | number} id
+ * @param {string} parse
+ * @return {object}
  */
 function sendPoll(poll, id = this.username, parse = 'Markdown') {
   let answers = [];
@@ -312,9 +319,9 @@ function sendPoll(poll, id = this.username, parse = 'Markdown') {
 }
 
 /**
- * @param {String} dice
- * @param {String | Number} id
- * @return {Object}
+ * @param {string} dice
+ * @param {string | number} id
+ * @return {object}
  */
 function sendDice(dice, id = this.username) {
   let params = {
@@ -326,7 +333,7 @@ function sendDice(dice, id = this.username) {
 }
 
 /**
- * @return {Object}
+ * @return {object}
  */
 function setWebhook() {
   request('/deleteWebhook');
