@@ -1,5 +1,8 @@
 # Telegram Auto Base Library for GAS (Google Apps Script)
 
+Installation
+============
+
 Go to Resources then Libraries in your GAS (Google Apps Script) project menus, and add this `1qsU5g_0LEEeDBLv0MUU1Noh90zIsJSdFVg9vU7uheC34Mn5_-tFN5Adk` to your library, don't forget to choose the latest version.
 
 Copy this code to your project.
@@ -40,4 +43,22 @@ default is 'Your message does not contain trigger words.'.
 
 Then run or execute `setWebhook` function.
 
-You can find the [example](samples/Code.js).
+Example
+=======
+
+This is an [example](samples/Code.js).
+
+Author
+======
+
+* [Abiyyu Daffa Alam](https://github.com/daffaalam) - https://daffaalam.com/
+
+Donations
+=========
+
+Saweria - [daffaalam](https://saweria.co/daffaalam)
+
+License
+=======
+
+This is free and unencumbered public domain software. For more information, see https://unlicense.org/ or the accompanying [UNLICENSE](LICENSE) file.
