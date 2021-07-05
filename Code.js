@@ -1,64 +1,52 @@
-const version = 1205312000;
+const version = 2107060215
 
 /**
- * @param {object} e
- * @return {HtmlService.HtmlOutput}
+ * @param {object} e 
+ * @return {HtmlService.HtmlOutput} 
  */
 function doGet(e) { return HtmlService.createHtmlOutput(this.alert) }
 
 /**
- * @param {object} e
- * @return {ContentService.TextOutput}
+ * @param {object} e 
  */
 function doPost(e) {
   if (!e.postData) return;
   if (e.postData.type != 'application/json') return;
   let data = JSON.parse(e.postData.contents);
-  data.version = version;
   try {
     let message = data.message;
     if (!message) return;
-    if (message.chat.type == 'supergroup') return;
+    if (message.chat.type != 'private') return;
     let sent = false;
+    if (message.media_group_id) Utilities.sleep(1000);
     let isCommand = isBotCommand(message.entities);
     let validTrigger = isValidTrigger(message.text) || isValidTrigger(message.caption);
-    if (message.media_group_id) Utilities.sleep(2000);
-    if (isCommand) sent = sendBotCommand(message.text);
+    if (isCommand) sendBotCommand(message.text);
     else if (!validTrigger) sendMessage(this.invalid, message.from.id);
-    else if (message.text) sent = sendMessage(message.text);
-    else if (message.sticker) sent = sendSticker(message.sticker.file_id);
-    else if (message.photo) sent = sendPhoto(message.photo[0].file_id, message.caption);
-    else if (message.animation) sent = sendAnimation(message.animation.file_id, message.caption);
-    else if (message.video) sent = sendVideo(message.video.file_id, message.caption);
-    else if (message.audio) sent = sendAudio(message.audio.file_id, message.caption);
-    else if (message.document) sent = sendDocument(message.document.file_id, message.caption);
-    else if (message.poll) sent = sendPoll(message.poll);
-    else if (message.dice) sent = sendDice(message.dice.emoji);
-    else sendMessage('`' + JSON.stringify(message, null, 2) + '`', this.admin);
+    else sent = copyMessage(message.chat.id, message.message_id);
     if (sent) sendMessage(this.thanks, message.from.id);
   } catch (error) {
     error = 'ERROR @' + this.channel + '\n\n' + error.toString();
     error += '\n\n`' + JSON.stringify(data, null, 2) + '`';
     sendMessage(error, this.admin);
   }
-  let output = ContentService.createTextOutput(JSON.stringify(data, null, 2));
-  return output.setMimeType(ContentService.MimeType.JSON);
+  return true;
 }
 
 /**
- * @param {object} data
- * @param {string} data.token
- * @param {number} data.admin
- * @param {string} data.trigger
- * @param {string} data.channel
- * @param {string} data.exec
- * @param {string} data.thanks
- * @param {string} data.report
- * @param {string} data.invalid
+ * @param {object} data 
+ * @param {string} data.token 
+ * @param {number} data.admin 
+ * @param {string} data.trigger 
+ * @param {string} data.channel 
+ * @param {string} data.exec 
+ * @param {string} data.thanks 
+ * @param {string} data.report 
+ * @param {string} data.invalid 
  * contact me at Telegram.
  * username: daffaalam
  * id: 256902271
- * @return {this}
+ * @return {this} 
  */
 function init(data) {
   if (!data || data == {}) throw 'data must not be null or empty';
@@ -81,9 +69,9 @@ function init(data) {
 }
 
 /**
- * @param {string} endPoint
- * @param {object} data
- * @return {object}
+ * @param {string} endPoint 
+ * @param {object} data 
+ * @return {object} 
  */
 function request(endPoint, data = {}) {
   data = JSON.stringify(data, null, 2);
@@ -100,8 +88,8 @@ function request(endPoint, data = {}) {
 }
 
 /**
- * @param {object} entities
- * @return {boolean}
+ * @param {object} entities 
+ * @return {boolean} 
  */
 function isBotCommand(entities) {
   if (!entities) return false;
@@ -112,8 +100,8 @@ function isBotCommand(entities) {
 }
 
 /**
- * @param {string} text
- * @return {boolean}
+ * @param {string} text 
+ * @return {boolean} 
  */
 function isValidTrigger(text) {
   if (!this.trigger) return true;
@@ -123,8 +111,8 @@ function isValidTrigger(text) {
 }
 
 /**
- * @param {string} text
- * @return {object}
+ * @param {string} text 
+ * @return {object} 
  */
 function parseMessage(text) {
   let format = ['http://', 'https://', ''];
@@ -151,8 +139,8 @@ function parseMessage(text) {
 }
 
 /**
- * @param {string} command
- * @return {boolean}
+ * @param {string} command 
+ * @return {boolean} 
  */
 function sendBotCommand(command) {
   if (!command.toLowerCase().includes(' ')) return false;
@@ -162,11 +150,11 @@ function sendBotCommand(command) {
 }
 
 /**
- * @param {string} message
- * @param {string | number} id
- * @param {boolean} preview
- * @param {string} parse
- * @return {object}
+ * @param {string} message 
+ * @param {string | number} id 
+ * @param {boolean} preview 
+ * @param {string} parse 
+ * @return {object} 
  */
 function sendMessage(message, id = this.username, preview = false, parse = 'Markdown') {
   let msg = parseMessage(message);
@@ -182,9 +170,9 @@ function sendMessage(message, id = this.username, preview = false, parse = 'Mark
 }
 
 /**
- * @param {string} image
- * @param {string | number} id
- * @return {object}
+ * @param {string} image 
+ * @param {string | number} id 
+ * @return {object} 
  */
 function sendSticker(image, id = this.username) {
   let params = {
@@ -196,11 +184,11 @@ function sendSticker(image, id = this.username) {
 }
 
 /**
- * @param {string} image
- * @param {string} message
- * @param {string | number} id
- * @param {string} parse
- * @return {object}
+ * @param {string} image 
+ * @param {string} message 
+ * @param {string | number} id 
+ * @param {string} parse 
+ * @return {object} 
  */
 function sendPhoto(image, message, id = this.username, parse = 'Markdown') {
   let msg = parseMessage(message);
@@ -216,11 +204,11 @@ function sendPhoto(image, message, id = this.username, parse = 'Markdown') {
 }
 
 /**
- * @param {string} image
- * @param {string} message
- * @param {string | number} id
- * @param {string} parse
- * @return {object}
+ * @param {string} image 
+ * @param {string} message 
+ * @param {string | number} id 
+ * @param {string} parse 
+ * @return {object} 
  */
 function sendAnimation(image, message, id = this.username, parse = 'Markdown') {
   let msg = parseMessage(message);
@@ -236,11 +224,11 @@ function sendAnimation(image, message, id = this.username, parse = 'Markdown') {
 }
 
 /**
- * @param {string} vid
- * @param {string} message
- * @param {string | number} id
- * @param {string} parse
- * @return {object}
+ * @param {string} vid 
+ * @param {string} message 
+ * @param {string | number} id 
+ * @param {string} parse 
+ * @return {object} 
  */
 function sendVideo(vid, message, id = this.username, parse = 'Markdown') {
   let msg = parseMessage(message);
@@ -256,11 +244,11 @@ function sendVideo(vid, message, id = this.username, parse = 'Markdown') {
 }
 
 /**
- * @param {string} music
- * @param {string} message
- * @param {string | number} id
- * @param {string} parse
- * @return {object}
+ * @param {string} music 
+ * @param {string} message 
+ * @param {string | number} id 
+ * @param {string} parse 
+ * @return {object} 
  */
 function sendAudio(music, message, id = this.username, parse = 'Markdown') {
   let msg = parseMessage(message);
@@ -276,11 +264,11 @@ function sendAudio(music, message, id = this.username, parse = 'Markdown') {
 }
 
 /**
- * @param {string} doc
- * @param {string} message
- * @param {string | number} id
- * @param {string} parse
- * @return {object}
+ * @param {string} doc 
+ * @param {string} message 
+ * @param {string | number} id 
+ * @param {string} parse 
+ * @return {object} 
  */
 function sendDocument(doc, message, id = this.username, parse = 'Markdown') {
   let msg = parseMessage(message);
@@ -296,10 +284,10 @@ function sendDocument(doc, message, id = this.username, parse = 'Markdown') {
 }
 
 /**
- * @param {object} poll
- * @param {string | number} id
- * @param {string} parse
- * @return {object}
+ * @param {object} poll 
+ * @param {string | number} id 
+ * @param {string} parse 
+ * @return {object} 
  */
 function sendPoll(poll, id = this.username, parse = 'Markdown') {
   let answers = [];
@@ -319,9 +307,9 @@ function sendPoll(poll, id = this.username, parse = 'Markdown') {
 }
 
 /**
- * @param {string} dice
- * @param {string | number} id
- * @return {object}
+ * @param {string} dice 
+ * @param {string | number} id 
+ * @return {object} 
  */
 function sendDice(dice, id = this.username) {
   let params = {
@@ -333,7 +321,23 @@ function sendDice(dice, id = this.username) {
 }
 
 /**
- * @return {object}
+ * @param {string | number} from_chat 
+ * @param {number} message 
+ * @param {string | number} chat 
+ * @return {object} 
+ */
+function copyMessage(from_chat, message, chat = this.username) {
+  let params = {
+    chat_id: chat,
+    from_chat_id: from_chat,
+    message_id: message
+  };
+  let response = request('/copyMessage', params);
+  return response.result;
+}
+
+/**
+ * @return {object} 
  */
 function setWebhook() {
   request('/deleteWebhook');
@@ -342,4 +346,11 @@ function setWebhook() {
     allowed_updates: ['message', 'poll']
   };
   return request('/setWebhook', params);
+}
+
+/**
+ * @return {object} 
+ */
+function deleteWebhook() {
+  return request('/deleteWebhook');
 }
